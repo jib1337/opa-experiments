@@ -1,9 +1,9 @@
-from flask import Flask, request, abort, redirect, url_for
-import requests, json
+from flask import Flask, request, abort, redirect, url_for, session
+import requests, json, os
 
 app = Flask(__name__)
+app.secret_key = os.urandom(16)
 
-# 
 def queryPolicyEngine(user, role):
     
     # Parameters must exist
@@ -21,8 +21,12 @@ def queryPolicyEngine(user, role):
     # Query OPA endpoint with params
     queryResult = requests.post('http://localhost:8181/v1/data/policy/allow', headers={'Content-Type': 'application/json'}, data=data).text
     decision = json.loads(queryResult)['result']
+    print('Policy Decision:', decision)
 
     if decision:
+
+        # Establish route to resource
+        session['routeEnable'] = True
         return True
     else:
         return False
@@ -30,9 +34,16 @@ def queryPolicyEngine(user, role):
 @app.route('/')
 def index():
 
-    # Using cookie values for this example
+    # Route to resource is not established
+    session['routeEnable'] = False
+
+    # Using cookie values or URL params
     user = request.cookies.get('user')
     role = request.cookies.get('role')
+    
+    if user is None or role is None:
+        user = request.args.get('user')
+        role = request.args.get('role')
 
     # Query policy engine
     if queryPolicyEngine(user, role):
@@ -42,4 +53,15 @@ def index():
 
 @app.route('/resource')
 def resource():
-    return 'You have accessed the resource, congrats'
+
+    try:
+        routeEnable = session['routeEnable']
+    except KeyError:
+        abort(401)
+
+    print('Route established:', session['routeEnable'])
+
+    if routeEnable:
+        return f'<p>You have been granted access the resource, congrats!</p><br><img src="/static/cat.jpg">'
+    else:
+        abort(401)

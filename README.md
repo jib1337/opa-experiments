@@ -6,7 +6,7 @@ This first example is closest to a resource portal-based deployment, except for 
 
 ## Starting
 1. Start OPA: `bash start-opa.sh`
-2. Start application server from the /pep folder: `flask run pep/app.py`
+2. Start application server from the server/ folder: `flask run`
 3. Test access to the "resource" by providing correct cookies:
 ```
 user: "jack"
