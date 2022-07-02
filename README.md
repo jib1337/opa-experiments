@@ -10,5 +10,5 @@ This first example is closest to a resource portal-based deployment, except for 
 3. Test access to the "resource" by providing correct cookies:
 ```
 user: "jack"
-role: "authorised"
+role: "catlover"
 ```
