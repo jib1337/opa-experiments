@@ -4,19 +4,22 @@ import requests, json, os
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 
-def queryPolicyEngine(user, role):
+def queryPolicyEngine(user, role, sourceAddress):
     
     # Parameters must exist
     if user is None or role is None: return False
-
+    
     data = '''
     {
         "input": {
             "user": "''' + user + '''",
-            "role": "''' + role + '''"
+            "role": "''' + role + '''",
+            "sourceAddress": "''' + sourceAddress + '''"
         }
     }
     '''
+
+    print(data)
 
     # Query OPA endpoint with params
     queryResult = requests.post('http://localhost:8181/v1/data/policy/allow', headers={'Content-Type': 'application/json'}, data=data).text
@@ -40,13 +43,15 @@ def index():
     # Using cookie values or URL params
     user = request.cookies.get('user')
     role = request.cookies.get('role')
+    sourceAddress = request.remote_addr
+    print(sourceAddress)
     
     if user is None or role is None:
         user = request.args.get('user')
         role = request.args.get('role')
 
-    # Query policy engine
-    if queryPolicyEngine(user, role):
+    # Query policy engine with all relevant request data
+    if queryPolicyEngine(user, role, sourceAddress):
         return redirect(url_for('resource'))
     else:
         abort(401)
