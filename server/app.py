@@ -1,10 +1,10 @@
 from flask import Flask, request, abort, redirect, url_for, session
-import requests, json, os
+import requests, json, os, jwt
 
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 
-def queryPolicyEngine(user, role, sourceAddress):
+def queryPolicyEngine(user, role, sourceAddress, token=None):
     
     # Parameters must exist
     if user is None or role is None: return False
@@ -27,31 +27,45 @@ def queryPolicyEngine(user, role, sourceAddress):
     print('Policy Decision:', decision)
 
     if decision:
-
+        
         # Establish route to resource
         session['routeEnable'] = True
         return True
     else:
         return False
 
+def handleToken(token):
+# Verify and extract claims from provided JWT
+    with open('../pe/public_key.pem', 'rb') as keyFile:
+        pubkey = keyFile.read()
+
+    claims = jwt.decode(token, pubkey, algorithms=["RS256"])
+    return claims['user'], claims['role']
+
 @app.route('/')
 def index():
 
-    # Route to resource is not established
-    session['routeEnable'] = False
-
-    # Using cookie values or URL params
-    user = request.cookies.get('user')
-    role = request.cookies.get('role')
     sourceAddress = request.remote_addr
-    print(sourceAddress)
-    
-    if user is None or role is None:
-        user = request.args.get('user')
-        role = request.args.get('role')
+    print('Source address:', sourceAddress)
 
-    # Query policy engine with all relevant request data
-    if queryPolicyEngine(user, role, sourceAddress):
+    authHeader = request.headers.get('Authorization')
+    if authHeader is not None:
+        token = authHeader.split('Bearer ')[1]
+        user, role = handleToken(token)
+        
+    else:
+
+        # Using cookie values or URL params
+        token = None
+        user = request.cookies.get('user')
+        role = request.cookies.get('role')
+            
+        if user is None or role is None:
+            user = request.args.get('user')
+            role = request.args.get('role')
+
+        # Query policy engine with all relevant request data
+    if queryPolicyEngine(user, role, sourceAddress, token):
         return redirect(url_for('resource'))
     else:
         abort(401)
@@ -59,6 +73,7 @@ def index():
 @app.route('/resource')
 def resource():
 
+    # Note: Currently any request sent via Curl doesn't trigger the route.
     try:
         routeEnable = session['routeEnable']
     except KeyError:
