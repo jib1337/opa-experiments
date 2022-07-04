@@ -4,20 +4,34 @@ import requests, json, os, jwt
 app = Flask(__name__)
 app.secret_key = os.urandom(16)
 
-def queryPolicyEngine(user, role, sourceAddress, token=None):
-    
-    # Parameters must exist
-    if user is None or role is None: return False
-    
-    data = '''
-    {
-        "input": {
-            "user": "''' + user + '''",
-            "role": "''' + role + '''",
-            "sourceAddress": "''' + sourceAddress + '''"
+def queryPolicyEngine(sourceAddress, user=None, role=None, token=None):
+        
+    if token:
+        # Ideally you would always evaluate based on a signed token only.
+
+        data = '''
+        {
+            "input": {
+                "token": "''' + token + '''"
+                "sourceAddress": "''' + sourceAddress + '''"
+            }
         }
-    }
-    '''
+        '''
+
+    else:
+    
+        # Parameters must exist
+        if user is None or role is None: return False
+
+        data = '''
+        {
+            "input": {
+                "user": "''' + user + '''",
+                "role": "''' + role + '''",
+                "sourceAddress": "''' + sourceAddress + '''"
+            }
+        }
+        '''
 
     print(data)
 
@@ -64,8 +78,8 @@ def index():
             user = request.args.get('user')
             role = request.args.get('role')
 
-        # Query policy engine with all relevant request data
-    if queryPolicyEngine(user, role, sourceAddress, token):
+    # Query policy engine with all relevant request data
+    if queryPolicyEngine(sourceAddress, user, role, token):
         return redirect(url_for('resource'))
     else:
         abort(401)
@@ -82,6 +96,8 @@ def resource():
     print('Route established:', session['routeEnable'])
 
     if routeEnable:
+        # Disable the route once it has been accessed. This is something the policy admin/engine would do automatically.
+        session['routeEnable'] = False
         return f'<p>You have been granted access the resource, congrats!</p><br><img src="/static/cat.jpg">'
     else:
         abort(401)
