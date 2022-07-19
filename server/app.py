@@ -12,7 +12,7 @@ def queryPolicyEngine(sourceAddress, user=None, role=None, token=None):
         data = '''
         {
             "input": {
-                "token": "''' + token + '''"
+                "token": "''' + token + '''",
                 "sourceAddress": "''' + sourceAddress + '''"
             }
         }
@@ -37,6 +37,7 @@ def queryPolicyEngine(sourceAddress, user=None, role=None, token=None):
 
     # Query OPA endpoint with params
     queryResult = requests.post('http://localhost:8181/v1/data/policy/allow', headers={'Content-Type': 'application/json'}, data=data).text
+    # print(queryResult)
     decision = json.loads(queryResult)['result']
     print('Policy Decision:', decision)
 
@@ -50,7 +51,8 @@ def queryPolicyEngine(sourceAddress, user=None, role=None, token=None):
 
 def handleToken(token):
 # Verify and extract claims from provided JWT
-    with open('../pe/public_key.pem', 'rb') as keyFile:
+    
+    with open('public_key.pem', 'rb') as keyFile:
         pubkey = keyFile.read()
 
     claims = jwt.decode(token, pubkey, algorithms=["RS256"])
@@ -87,7 +89,7 @@ def index():
 @app.route('/resource')
 def resource():
 
-    # Note: Currently any request sent via Curl doesn't trigger the route.
+    # Note: Currently any request sent via Curl/jwt in web console doesn't trigger the route.
     try:
         routeEnable = session['routeEnable']
     except KeyError:
