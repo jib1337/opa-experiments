@@ -23,12 +23,14 @@ sourceApps := [
     }
 ]
 
-# runtime.env.PROD_CERTIFICATE
-# Allow if JWT token from approved app verifies with valid username and role
+# Allow if JWT token from approved app verifies with valid certificate, username and role
 # https://www.openpolicyagent.org/docs/v0.16.2/faq/
-# Note: for some reason this isn't working yet
 allow {
     io.jwt.verify_rs256(token, cert)
+    [header, payload, _] := io.jwt.decode(token)
+    payload.user == "jack"
+    payload.role == "catlover"
+
     sourceApps[_].addr
 }
 
