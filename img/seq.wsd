@@ -1,0 +1,20 @@
+@startuml
+
+"User\n(Web Browser/Curl)" -> "Server\n(server function index)": Request to server controlling resource
+"Policy Admin\n(server function queryPolicyEngine)" -> "Policy Engine\n(OPA)": Evaluate against Policy
+"Policy Engine\n(OPA)" -> "Policy Engine\n(OPA)": Evaluate data,\ndetermine trust
+"Policy Engine\n(OPA)" -> "Policy Admin\n(server function queryPolicyEngine)": Policy Decision (Allow/Disallow)
+
+alt allowed
+
+    "Policy Admin\n(server function queryPolicyEngine)" -> "Resource\n(server function resource)": Enable connection from user to resource
+    "Server\n(server function index)" -> "User\n(Web Browser/Curl)": Redirect to resource
+    "User\n(Web Browser/Curl)" -> "Resource\n(server function resource)": Access resource
+
+else disallowed
+
+    "Policy Admin\n(server function queryPolicyEngine)" -> "Server\n(server function index)": Inform server of decision
+    "Server\n(server function index)" -> "User\n(Web Browser/Curl)": Deny user access
+end
+
+@enduml

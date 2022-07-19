@@ -1,8 +1,11 @@
 # OPA Test
 
 ## Model
-This first example is closest to a resource portal-based deployment, except for simplicity, the gateway and resource are on the same server.
+This example is closest to a resource portal-based deployment, except for simplicity, the gateway and resource are on the same flask server.
 ![](img/2022-07-02-18-05-30.png)
+
+## Sequence flow
+![](img/seq.png)
 
 ## Setup
 1. Generate keys, certificates and policy file from client/ folder: `bash generate_keys.sh`*
